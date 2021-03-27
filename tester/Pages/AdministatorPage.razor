@@ -1,0 +1,10 @@
+﻿@inject NavigationManager NavManager
+@code {
+    protected override void OnInitialized()
+    {
+        if (!(NavManager.BaseUri.Contains("localhost") || NavManager.BaseUri.Contains("127.0.0.1")))
+            NavManager.NavigateTo("/Error");
+        base.OnInitialized();
+    }
+
+}

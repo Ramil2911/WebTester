@@ -1,0 +1,134 @@
+﻿@using tester.Data
+@using tester.Data.QuizQuestions
+@using Microsoft.AspNetCore.Components.Rendering
+@using System
+@inherits ComponentBase
+<div class="block">
+  <div class="field">
+    <label class="label">Название теста</label>
+    <div class="columns">
+      <div class="column is-half-widescreen">
+        <div class="control">
+          <input @bind="TestName" class="input is-success" type="text" placeholder="Название теста">
+        </div>
+      </div>
+    </div>
+  </div>
+  <label class="label">Тип вопроса</label>
+    <div class="is-flex is-flex-direction-row">
+        <div class="select pr-2">
+          <select @bind="@SelectedQuestionTypeByName">
+            @foreach (var item in QuestionTypes)
+            {
+              <option value="@item.FullName">@item.Name</option>
+            }
+          </select>
+        </div>
+      <button class="button is-danger">Удалить</button>
+    </div>
+  <div class="is-flex is-flex-direction-row is-flex-wrap-wrap">
+    @for(var index = 0; index < _questions.Count; index++)
+    {
+      var i = index;
+      <button class="button is-success mt-1 mr-1 mb-1" style="width: fit-content" @onclick="@(() => CurrentIndex=i)">
+        <span>@(i+1)</span>
+      </button>
+    }
+    <button class="button is-success mt-1 mr-1 mb-1" style="width: fit-content" @onclick="AddQuestion">
+      <span>+</span>
+    </button>
+  </div>
+  <hr/>
+  @if (Helpers.IsDebug())
+  {
+    <p>@_currentIndex</p>
+  }
+  @for (var i = 0; i < 1; i++)
+  {
+    @RedactorFragment
+  }
+</div>
+
+@code {
+
+  // надо будет потом почитать, как делать эти штуки в 2 файла - html и C#
+  
+
+  //Название теста
+  private string TestName { get; set; } = "";
+
+  //Тип активного вопроса
+  private Type _selectedQuestionType;
+  private Type SelectedQuestionType
+  {
+    get => _selectedQuestionType;
+    set { _selectedQuestionType = value; Console.WriteLine(value.FullName);}
+  }
+  ///<summary>
+  /// Для установки типа по его полному имени <see cref="Type.FullName"/>
+  /// </summary>
+  private string SelectedQuestionTypeByName
+  {
+    get => _selectedQuestionType?.FullName;
+    set => _selectedQuestionType = Type.GetType(value);
+  }
+  
+  //фрагмент, в который пишется редактор вопроса
+  [Parameter]
+  public RenderFragment RedactorFragment { get; set; }
+
+  //тут хранятся все типы, наследованные от Question
+  private static IEnumerable<Type> QuestionTypes { get; set; } = Helpers.GetInheritedOfType<Question>();
+  private List<IBuildable> _questions = new();
+  private int _currentIndex = 0;
+
+  private int CurrentIndex
+  {
+    get => _currentIndex;
+    set { _currentIndex = value; NotifyIndexChanged();}
+  }
+  
+
+  //при инициализации компонента сразу выставляется первый вопрос
+  protected override void OnInitialized()
+  {
+    SelectedQuestionType = QuestionTypes.ElementAt(0);
+    _questions.Add((IBuildable)Activator.CreateInstance(SelectedQuestionType));
+    RedactorFragment = ShowDynamicComponent();
+    base.OnInitialized();
+  }
+
+  private void AddQuestion()
+  {
+    _questions.Add((IBuildable)Activator.CreateInstance(SelectedQuestionType));
+    CurrentIndex = _questions.Count - 1;
+  }
+
+  /*вообще вроде как можно использовать реактивные расширения для Blazor, но мне это надо привести в рабочий
+   вид до конца каникул, не вижу смысла в попытках их использования сейчас*/
+  private void NotifyIndexChanged()
+  {
+    RedactorFragment = ShowDynamicComponent();
+  }
+
+  //мной не было найдено ничего внятного по динамическим компонентам в blazor кроме этого
+  //https://docs.microsoft.com/ru-ru/aspnet/core/blazor/advanced-scenarios?view=aspnetcore-5.0
+  //который называет использование RenderTreeBuilder сложным сценарием
+  
+  //сначала я не понял синтаксиса, приведенного в документации, но это функция, возвращающая метод, соответствующий сигнатуре
+  //делегата RenderFragment. Наверное, можно заменить на поле.
+  private RenderFragment ShowDynamicComponent() => builder =>
+  {
+    SelectedQuestionTypeByName = _questions[CurrentIndex].GetType().FullName;
+    builder.OpenComponent(0, _questions[CurrentIndex].GetRedactorType()); //тут объект создается только если он не был уже создан
+    builder.AddAttribute(1, "Model", _questions[CurrentIndex]);
+    builder.AddAttribute(2, "Index", CurrentIndex); //TODO: удалить перед сдачей проекта (+внутри редакторов)
+    builder.CloseComponent();
+    
+    /*спустя 3 часа непонимания и чтения документации опытным путем было выяснено, что при использовании
+     OpenComponent не создает новый объект, а ОБНОВЛЯЕТ СТАРЫЙ.
+     вполне логично с точки зрения оптимизации, но не с точки зрения уставшего меня*/
+  };
+
+
+}

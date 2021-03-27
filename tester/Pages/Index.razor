@@ -1,0 +1,25 @@
+﻿@page "/"
+@inject NavigationManager NavManager
+
+<h1 class="title">Вы не должны видеть эту страницу.
+    Если она не исчезает - что-то не так.</h1>
+<h1 class="subtitle">@uri</h1>
+
+@code
+{
+    public string uri = "";
+    
+    protected override void OnInitialized()
+    {
+        uri = NavManager.BaseUri;
+        if (uri.Contains("localhost") | uri.Contains("127.0.0.1"))
+        {
+            NavManager.NavigateTo("/Admin");
+        }
+        else
+        {
+            uri = "False";
+        }
+        base.OnInitialized();
+    }
+}

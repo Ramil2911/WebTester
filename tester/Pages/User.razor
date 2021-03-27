@@ -1,0 +1,68 @@
+﻿@page "/User"
+@using tester.Data
+@inject SessionData Session
+@inject NavigationManager NavManager
+<h3 class="title">*потом придумаю, что тут написать*</h3>
+<h3 class="subtitle">Для запуска теста нажмите кнопку "Начать"</h3>
+<div  class="box is-light mt-2 mb-2 is-primary">
+   Закрытие окна приведет к сбросу сессии, к ней нельзя будет вернуться.</div>
+<button @onclick="OpenEntrance" class="button is-success is-center is-large mt-6">Начать</button>
+
+@{
+    if (EntranceOpened)
+    {
+        <div class="modal is-active">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Для продолжения введите данные</p>
+                    <button @onclick="CloseEntrance" class="delete" aria-label="close"></button>
+                </header>
+                <section class="modal-card-body">
+                    <div class="field">
+                      <label class="label">Имя и фамилия</label>
+                        <div class="control">
+                            <input @bind="Name" class="input @(Name == "" ? "is-danger" : "")"  type="text" placeholder="Вася Пупкин">
+                        </div>
+                        @functions{
+
+                            public string CheckDanger() => Name == "" ? "is-danger" : "";
+                        }
+                        @{
+                            if (Name == "")
+                            {
+                                <p class="help is-danger">
+                                    Необходимо хоть что-нибудь ввести
+                                </p>
+                            }
+}
+                        <p class="block">Помните, что время и IP сессии сохраняются.</p>
+                    </div>
+                </section>
+                <footer class="modal-card-foot">
+                    <button @onclick="Continue" disabled="@(Name=="" ? true : false)" class="button is-success">Начать</button>
+                    <button @onclick="CloseEntrance" class="button">Отмена</button>
+                </footer>
+            </div>
+        </div>
+    }
+}
+@code {
+    //Modal
+    public bool EntranceOpened = false;
+    public void OpenEntrance() => EntranceOpened = true;
+    public void CloseEntrance() => EntranceOpened = false;
+    //Modal
+
+    public string Name { get; set; } = "";
+
+    private void Continue()
+    {
+        if (Name == "") return;
+
+        Session.NameSurname = Name;
+        Session.IsTestActive = true; //It is the only place where IsTestActive can be made true
+        NavManager.NavigateTo("/Test");
+    }
+
+}

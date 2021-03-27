@@ -1,0 +1,50 @@
+﻿@inject NavigationManager NavManager
+
+<nav class="navbar is-light" role="navigation" aria-label="main navigation" style="border-bottom-left-radius: 10px;
+                                                                                   border-bottom-right-radius: 10px;">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="">
+      <p>Super-puper-name</p>
+    </a>
+
+    <a @onclick="SwitchSideView" role="button" class="navbar-burger @IsSideViewOpened" aria-label="menu" aria-expanded="false" data-target="navbar">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+
+  <div class="navbar-menu" id="navbar">
+    <div class="navbar-start">
+      <a class="navbar-item">
+        Placeholder 1
+      </a>
+
+      <a class="navbar-item">
+        Placeholder 2
+      </a>
+    </div>
+  </div>
+  
+@{
+  if (NavManager.BaseUri.Contains("localhost") | NavManager.BaseUri.Contains("127.0.0.1"))
+  {
+    <div class="navbar-end">
+      <div class="navbar-item">
+        <div class="buttons">
+          <a href="Admin" class="button is-primary">
+            <strong>К виду администратора</strong>
+          </a>
+        </div>
+      </div>
+    </div>
+  } }
+</nav>
+
+@code
+{
+  //Burger
+  public string IsSideViewOpened { get; set; } = "";
+  public void SwitchSideView() => IsSideViewOpened = IsSideViewOpened == "" ? "is-active" : "";
+  //Burger
+}

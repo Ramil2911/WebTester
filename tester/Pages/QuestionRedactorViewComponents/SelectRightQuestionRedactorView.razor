@@ -1,0 +1,119 @@
+﻿@inherits QuestionRedactorViewBase
+@using tester.Data.QuizQuestions
+@using tester.Data
+@if (Helpers.IsDebug())
+{
+  <p>@Index</p>
+}
+<h3 class="subtitle">Текст воспроса</h3>
+<textarea class="textarea block" type="text" @bind="Description" style="min-height: 50vh"></textarea>
+<h3 class="subtitle">Возможные ответы</h3>
+<p class="buttons">
+  <button class="button is-success" @onclick="@AddAnswer">
+    <span class="icon is-small">
+      <img src="icons/add.svg">
+    </span>
+    <span>Добавить ответ</span>
+  </button>
+</p>
+<label class="checkbox mt-2 mb-1">
+  <input type="checkbox" @bind="IsMultipleAnswersAllowed">
+  Разрешить несколько правильных вариантов ответа</label>
+@if (Helpers.IsDebug())
+{
+  <p>@IsMultipleAnswersAllowed</p>
+}
+
+@for (var index = 0; index < Answers.Count; index++)
+{
+    var i = index;
+  
+  <div class="box">
+    <article class="media">
+      <div class="media-content">
+        <div class="field">
+          <p class="control">
+            <textarea class="textarea" @bind="@Answers[i]"></textarea>
+          </p>
+        </div>
+        <nav class="level">
+          <div class="level-left">
+            <div class="level-item">
+              <a class="button is-success" @onclick="@(() => { SwitchRightAnswer(i); })">
+                <span>Правильный ответ</span>
+              </a>
+            </div>
+            <span class="icon">
+            @if (RightAnswersIndices[i])
+            {<img src="icons/check.svg"/>}
+            </span>
+          </div>
+        </nav>
+      </div>
+       <figure class="media-right">
+         <button @onclick="@(() => { DeleteAnswer(i); })" class="delete"></button>
+       </figure>
+    </article>
+  </div>
+}
+
+@code {
+  //модель необходима по причине того, что при повторном отображении объекта Blazor не заменяет объект новым,
+  //а обновляет старый
+  [Parameter]
+  public override object Model { get; set; }
+
+  //для удобства
+  //конкретно это свойство по непонятным причинам не хочет писаться кратким способом по неизвоестным причинам
+  private string Description
+  {
+    get => ((SelectRight) Model).Description;
+    set => ((SelectRight) Model).Description = value;
+  }
+  private List<string> Answers => ((SelectRight) Model).Answers;
+  private List<bool> RightAnswersIndices => ((SelectRight) Model).RightAnswersIndices;
+  //почему в английском Index - Indices, а не Indexes?
+  private bool IsMultipleAnswersAllowed
+  {
+    get => ((SelectRight) Model).IsMultipleAnswersAllowed;
+    set { ((SelectRight) Model).IsMultipleAnswersAllowed = value; SwitchMultipleAnswersAllowed();}
+  }
+  //ReSharper утверждает, что setter не нужен, но он используется в бинде
+
+
+  private void AddAnswer()
+  {
+    Answers.Add("");
+    RightAnswersIndices.Add(false);
+  }
+
+  private void DeleteAnswer(int i)
+  {
+    Answers.RemoveAt(i);
+    RightAnswersIndices.RemoveAt(i);
+  }
+
+  private void SwitchRightAnswer(int i)
+  {
+    if (IsMultipleAnswersAllowed)
+    {
+      RightAnswersIndices[i] = !RightAnswersIndices[i];
+    }
+    else
+    {
+      for (var index = 0; index < RightAnswersIndices.Count; index++)
+      {
+        RightAnswersIndices[index] = false;
+      }
+      RightAnswersIndices[i] = !RightAnswersIndices[i];
+    }
+  }
+  private void SwitchMultipleAnswersAllowed()
+  {
+    for (var index = 0; index < RightAnswersIndices.Count; index++)
+    {
+      RightAnswersIndices[index] = false;
+    }
+  }
+
+}

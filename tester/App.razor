@@ -1,0 +1,11 @@
+<Router AppAssembly="@typeof(Program).Assembly" PreferExactMatches="@true">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <h3 class="title">404</h3>
+            <h3 class="subtitle">Страница не найдена</h3>
+        </LayoutView>
+    </NotFound>
+</Router>

@@ -1,0 +1,34 @@
+﻿@inherits QuestionBase
+@using tester.Data.QuizQuestions
+<h4 class="title">Выберите верный вариант ответа</h4>
+<p class="block">@Data.Description</p>
+@for (var index = 0; index < Data.Answers.Count; index++)
+{
+    var answer = Data.Answers[index];
+    var i = index;
+    <div class="box is-clickable @(ActiveIndexes[i] ? "has-background-success" : "")" 
+          @onclick="@(() => { ActiveIndexes[i] = !ActiveIndexes[i];})">
+        @answer
+    </div>
+}
+
+<button class="button is-primary">Продолжить</button>
+
+@code {
+
+    [Parameter]
+    public SelectRight Data { get; set; }
+
+    private List<bool> ActiveIndexes { get; set; } = new List<bool>();
+
+    protected override void OnInitialized()
+    {
+        foreach (var item in Data.Answers)
+        {
+            ActiveIndexes.Add(false);
+        }
+        
+        base.OnInitialized();
+    }
+
+}

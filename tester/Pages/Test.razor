@@ -1,0 +1,34 @@
+﻿@page "/Test"
+@using tester.Data
+@using tester.Data.QuizQuestions
+@inject SessionData Session 
+@inject NavigationManager NavManager
+
+@if (!Session.IsTestActive)
+{
+    NavManager.NavigateTo("/");
+}
+else
+{
+    <h3 class="title">Вопрос @Session.QuestionIndex</h3>
+}
+
+@code {
+    public static string Example = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In fermentum fermentum auctor. Aliquam nec ipsum maximus, hendrerit enim quis, mattis velit. Donec elit nunc, malesuada eu fringilla non, commodo vel arcu. Ut nisl odio, semper sit amet accumsan at, sagittis id erat. Pellentesque ut imperdiet lorem, id luctus augue. Nunc lobortis euismod arcu quis dapibus. Phasellus nec tellus massa. Duis et mollis sapien. Quisque eget massa non nisi ornare eleifend. Cras fermentum justo eu felis lacinia, fringilla rutrum odio auctor. Aliquam erat volutpat. Nullam sit amet dui tellus. Quisque ullamcorper tellus eu risus cursus, non pretium justo tincidunt. Sed laoreet imperdiet velit eget tempor. Nam fringilla massa sit amet lacus tincidunt, ac pellentesque augue lacinia.";
+
+    public static List<string> Answers = new List<string>()
+    {
+        "1", "2", "3", "4"
+    };
+    public static List<bool> RightAnswersIndexes = new List<bool>()
+    {
+        true,
+    };
+    
+    protected override void OnInitialized()
+    {
+        Session.QuestionIndex++;
+        base.OnInitialized();
+    }
+
+}
