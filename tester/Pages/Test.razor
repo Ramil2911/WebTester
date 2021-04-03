@@ -1,34 +1,76 @@
 ﻿@page "/Test"
+@implements IDisposable
 @using tester.Data
-@using tester.Data.QuizQuestions
-@inject SessionData Session 
+@using tester.Data.Services
+@inject SessionDataService SessionData
 @inject NavigationManager NavManager
+@inject TestsDbService TestDbService;
+@inject TestSessionsService TestSessionsService;
+@inject HttpClient HttpClient;
 
-@if (!Session.IsTestActive)
+@if (!SessionData.IsTestActive)
 {
     NavManager.NavigateTo("/");
 }
 else
 {
-    <h3 class="title">Вопрос @Session.QuestionIndex</h3>
+    <h3 class="title">Вопрос @SessionData.QuestionIndex</h3>
+    <div>
+        @QuestionFragment
+    </div>
 }
 
 @code {
-    public static string Example = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In fermentum fermentum auctor. Aliquam nec ipsum maximus, hendrerit enim quis, mattis velit. Donec elit nunc, malesuada eu fringilla non, commodo vel arcu. Ut nisl odio, semper sit amet accumsan at, sagittis id erat. Pellentesque ut imperdiet lorem, id luctus augue. Nunc lobortis euismod arcu quis dapibus. Phasellus nec tellus massa. Duis et mollis sapien. Quisque eget massa non nisi ornare eleifend. Cras fermentum justo eu felis lacinia, fringilla rutrum odio auctor. Aliquam erat volutpat. Nullam sit amet dui tellus. Quisque ullamcorper tellus eu risus cursus, non pretium justo tincidunt. Sed laoreet imperdiet velit eget tempor. Nam fringilla massa sit amet lacus tincidunt, ac pellentesque augue lacinia.";
-
-    public static List<string> Answers = new List<string>()
-    {
-        "1", "2", "3", "4"
-    };
-    public static List<bool> RightAnswersIndexes = new List<bool>()
-    {
-        true,
-    };
     
-    protected override void OnInitialized()
+    private RenderFragment QuestionFragment { get; set; }
+
+    private Session _session = new Session();
+    
+    protected override void OnParametersSet()
     {
-        Session.QuestionIndex++;
-        base.OnInitialized();
+        QuestionFragment = ShowDynamicComponent();
+
+        if (HttpClient.BaseAddress is not null) _session.IpAddress = HttpClient.BaseAddress.Authority;
+        _session.NameSurname = SessionData.NameSurname;
+        _session.QuestionIndex = 0;
+        _session.TestName = SessionData.UserTest.Name;
+        
+        TestSessionsService.Sessions.Add(_session);
+        
+        base.OnParametersSet();
+    }
+
+    private void NextQuestion(bool success)
+    {
+        if (success) SessionData.CorrectAnswers += 1;
+        SessionData.QuestionIndex += 1;
+        _session.QuestionIndex = SessionData.QuestionIndex;
+        if (SessionData.UserTest.Questions.Count <= SessionData.QuestionIndex)
+        {
+            NavManager.NavigateTo("/Results");
+            return;
+        }
+        QuestionFragment = ShowDynamicComponent();
+    }
+    
+    private RenderFragment ShowDynamicComponent() => builder =>
+    {
+        if (SessionData.UserTest.Questions.Count <= SessionData.QuestionIndex)
+        {
+            return;
+        }
+        //об EventCallback.Factory написано здесь https://stackoverflow.com/questions/59816177/set-eventcallbackstring-outside-of-a-blazor-componet
+        builder.OpenComponent(0, SessionData.UserTest.Questions[SessionData.QuestionIndex].GetViewType());
+        builder.AddAttribute(1, "Model", SessionData.UserTest.Questions[SessionData.QuestionIndex]);
+        builder.AddAttribute(2, "OnContinue", EventCallback.Factory.Create(this, (bool x) => NextQuestion(x)));
+        builder.CloseComponent();
+        //комментарии к подобному коду находятся в QuestionCreator.razor
+    };
+
+    public void Dispose()
+    {
+        HttpClient?.Dispose();
+        TestSessionsService.Sessions.Remove(_session);
     }
 
 }

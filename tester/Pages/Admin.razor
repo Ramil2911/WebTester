@@ -1,5 +1,8 @@
 ﻿@page "/Admin"
+@using tester.Data.Services
 @inherits AdministatorPage
+@inject CircuitHandlerService CircuitHandlerService
+@inject TestSessionsService TestSessionsService;
 <nav class="breadcrumb is-large mb-1" aria-label="breadcrumbs">
   <ul>
     <li  class="is-active" aria-current="page"><a href="Admin">Администратирование</a></li>
@@ -8,26 +11,53 @@
     <li><a href="User">Войти как пользователь</a></li>
   </ul>
 </nav>
-<h3 class="subtitle">Доступ на данную страницу предоставляется только с localhost/127.0.0.1</h3>
+<h3 class="subtitle">Доступ на страницы администратирования предоставляется только с localhost/127.0.0.1</h3>
 <hr/>
 <div class="columns">
   <table class="table column is-half-widescreen is-light">
     <thead>
-      <tr>
-        <th>IP</th>
-        <th>Имя теста</th>
-        <th><abbr title="Номер Задания">№</abbr></th>
-      </tr>
+    <tr>
+      <th>№</th>
+      <th>Circuit ID</th>
+    </tr>
     </thead>
     <tbody>
-    <tr>
-      <td>127.0.0.1</td>
-      <td>null</td>
-      <td>null</td>
-    </tr>
+    @foreach (var (key, value) in CircuitHandlerService.Circuits)
+    {
+      <tr>
+        <td>@key</td>
+        <td>@value.Id</td>
+      </tr>
+    }
     </tbody>
   </table>
+  <table class="table column is-half-widescreen is-light">
+      <thead>
+      <tr>
+        <th>№</th>
+        <th>ФИО</th>
+        <th>IP</th>
+        <th>Имя теста</th>
+        <th>Номер вопроса</th>
+      </tr>
+      </thead>
+      <tbody>
+      @for (var index = 0; index < TestSessionsService.Sessions.Count; index++)
+      {
+        var i = index;
+        var item = TestSessionsService.Sessions[index];
+        <tr>
+          <td>@i</td>
+          <td>@item.NameSurname</td>
+          <td>@item.IpAddress</td>
+          <td>@item.TestName</td>
+          <td>@item.QuestionIndex</td>
+        </tr>
+}
+      </tbody>
+    </table>
 </div>
+
 
 @code {
     

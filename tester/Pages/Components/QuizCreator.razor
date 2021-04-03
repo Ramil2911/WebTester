@@ -1,7 +1,10 @@
 ﻿@using tester.Data
-@using tester.Data.QuizQuestions
-@using Microsoft.AspNetCore.Components.Rendering
-@using System
+@using System.Reflection
+@using System.IO
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Converters
+@using tester.Data.Testing
+@using tester.Data.Testing.QuizQuestions
 @inherits ComponentBase
 <div class="block">
   <div class="field">
@@ -9,28 +12,40 @@
     <div class="columns">
       <div class="column is-half-widescreen">
         <div class="control">
-          <input @bind="TestName" class="input is-success" type="text" placeholder="Название теста">
+          <input @bind="TestName" @bind:event="oninput"
+                  class="input @((TestName == "" | Helpers.IsInvalidFilename(TestName)) ? "is-danger" : "")"
+                  type="text" placeholder="Название теста">
         </div>
+        @{
+          if (TestName == "" | Helpers.IsInvalidFilename(TestName))
+          {
+            <p class="help is-danger">
+              Неверное имя
+            </p>
+          }
+        }
       </div>
     </div>
   </div>
   <label class="label">Тип вопроса</label>
-    <div class="is-flex is-flex-direction-row">
-        <div class="select pr-2">
-          <select @bind="@SelectedQuestionTypeByName">
-            @foreach (var item in QuestionTypes)
-            {
-              <option value="@item.FullName">@item.Name</option>
-            }
-          </select>
-        </div>
-      <button class="button is-danger">Удалить</button>
+  <div class="is-flex is-flex-direction-row">
+    <div class="select pr-2">
+      <select @bind="@SelectedQuestionTypeByName">
+        @foreach (var item in QuestionTypes)
+        {
+          <option value="@item.FullName">@item.Name</option>
+        }
+      </select>
     </div>
+    <button class="button is-danger" @onclick="RemoveQuestion">Удалить</button>
+  </div>
+  <label class="label mt-2 mb-0">Вопросы</label>
   <div class="is-flex is-flex-direction-row is-flex-wrap-wrap">
     @for(var index = 0; index < _questions.Count; index++)
     {
       var i = index;
-      <button class="button is-success mt-1 mr-1 mb-1" style="width: fit-content" @onclick="@(() => CurrentIndex=i)">
+      <button class="button @(i == _currentIndex ? "is-primary" : "is-success") mt-1 mr-1 mb-1" 
+              style="width: fit-content" @onclick="@(() => CurrentIndex=i)">
         <span>@(i+1)</span>
       </button>
     }
@@ -38,11 +53,11 @@
       <span>+</span>
     </button>
   </div>
+  <button class="button is-success mt-4 mr-1 mb-1" style="width: fit-content" @onclick="Save"
+          disabled="@(TestName == "" | Helpers.IsInvalidFilename(TestName) | _questions.Count == 0)">
+    <span>Сохранить тест</span>
+  </button>
   <hr/>
-  @if (Helpers.IsDebug())
-  {
-    <p>@_currentIndex</p>
-  }
   @for (var i = 0; i < 1; i++)
   {
     @RedactorFragment
@@ -50,10 +65,11 @@
 </div>
 
 @code {
-
   // надо будет потом почитать, как делать эти штуки в 2 файла - html и C#
   
-
+  [Parameter]
+  public Test RedactableTest { get; set; }
+  
   //Название теста
   private string TestName { get; set; } = "";
 
@@ -62,8 +78,9 @@
   private Type SelectedQuestionType
   {
     get => _selectedQuestionType;
-    set { _selectedQuestionType = value; Console.WriteLine(value.FullName);}
+    set { _selectedQuestionType = value;}
   }
+  
   ///<summary>
   /// Для установки типа по его полному имени <see cref="Type.FullName"/>
   /// </summary>
@@ -74,28 +91,45 @@
   }
   
   //фрагмент, в который пишется редактор вопроса
-  [Parameter]
   public RenderFragment RedactorFragment { get; set; }
 
   //тут хранятся все типы, наследованные от Question
   private static IEnumerable<Type> QuestionTypes { get; set; } = Helpers.GetInheritedOfType<Question>();
+  //все вопросы теста
   private List<IBuildable> _questions = new();
-  private int _currentIndex = 0;
+  //индекс текущего отображаемого вопроса
+  private ushort _currentIndex = 0;
 
   private int CurrentIndex
   {
     get => _currentIndex;
-    set { _currentIndex = value; NotifyIndexChanged();}
+    set { _currentIndex = (ushort) value; NotifyIndexChanged();}
   }
   
+  /*вообще вроде как можно использовать реактивные расширения для Blazor, но мне это надо привести в рабочий
+   вид до конца каникул, не вижу смысла в попытках их использования сейчас*/
+  private void NotifyIndexChanged() => RedactorFragment = ShowDynamicComponent();
 
-  //при инициализации компонента сразу выставляется первый вопрос
-  protected override void OnInitialized()
+  protected override void OnParametersSet()
   {
-    SelectedQuestionType = QuestionTypes.ElementAt(0);
-    _questions.Add((IBuildable)Activator.CreateInstance(SelectedQuestionType));
+    _questions.Clear();
+    TestName = "";
+    
+  /*TODO: сделать НОРМАЛЬНОЕ редактирование, пока что это работает, так как тест с тем же именем просто переписывается, но все равно как-то нехорошо*/
+    if (RedactableTest != null) //CreateTest выставляет значение null только если нет параметра индекса страницы
+    {
+      var questions = RedactableTest.Questions.Select(item => item.Copy()).ToList();
+      _questions = questions;
+      TestName = RedactableTest.Name;
+      SelectedQuestionType = _questions[0].GetType();
+    }
+    else //если параметра нет, то создается новый тест
+    {
+      SelectedQuestionType = QuestionTypes.ElementAt(0);
+      _questions.Add((IBuildable)Activator.CreateInstance(SelectedQuestionType));
+    }
     RedactorFragment = ShowDynamicComponent();
-    base.OnInitialized();
+    base.OnParametersSet();
   }
 
   private void AddQuestion()
@@ -103,12 +137,15 @@
     _questions.Add((IBuildable)Activator.CreateInstance(SelectedQuestionType));
     CurrentIndex = _questions.Count - 1;
   }
-
-  /*вообще вроде как можно использовать реактивные расширения для Blazor, но мне это надо привести в рабочий
-   вид до конца каникул, не вижу смысла в попытках их использования сейчас*/
-  private void NotifyIndexChanged()
+  
+  private void RemoveQuestion()
   {
-    RedactorFragment = ShowDynamicComponent();
+    if (_questions.Count == 1)
+    {
+      RedactorFragment = null;
+    }
+    _questions.RemoveAt(_currentIndex);
+    CurrentIndex = _questions.Count - 1;
   }
 
   //мной не было найдено ничего внятного по динамическим компонентам в blazor кроме этого
@@ -119,16 +156,44 @@
   //делегата RenderFragment. Наверное, можно заменить на поле.
   private RenderFragment ShowDynamicComponent() => builder =>
   {
+    if(_questions.Count==0) return;
     SelectedQuestionTypeByName = _questions[CurrentIndex].GetType().FullName;
     builder.OpenComponent(0, _questions[CurrentIndex].GetRedactorType()); //тут объект создается только если он не был уже создан
     builder.AddAttribute(1, "Model", _questions[CurrentIndex]);
     builder.AddAttribute(2, "Index", CurrentIndex); //TODO: удалить перед сдачей проекта (+внутри редакторов)
     builder.CloseComponent();
     
-    /*спустя 3 часа непонимания и чтения документации опытным путем было выяснено, что при использовании
-     OpenComponent не создает новый объект, а ОБНОВЛЯЕТ СТАРЫЙ.
-     вполне логично с точки зрения оптимизации, но не с точки зрения уставшего меня*/
+  /*спустя 3 часа непонимания и чтения документации опытным путем было выяснено, что при использовании
+    OpenComponent не создает новый объект, а ОБНОВЛЯЕТ СТАРЫЙ.
+    вполне логично с точки зрения оптимизации, но не с точки зрения уставшего меня*/
   };
 
+
+  private void Save()
+  {
+  //директория тестов
+    var testsDir = new FileInfo(Assembly.GetExecutingAssembly().Location).Directory.FullName + "/Tests";
+    if (!Directory.Exists(testsDir)) Directory.CreateDirectory(testsDir);
+
+  //директория json
+    var jsonDir = testsDir + $"/{TestName}";
+    if (!Directory.Exists(jsonDir)) Directory.CreateDirectory(jsonDir);
+
+
+    var filePath = jsonDir + $"/{TestName}.json";
+
+  //создание json и сериализатора
+    var test = new Test {Name = TestName, Questions = _questions};
+    var serializer = new JsonSerializer();
+    serializer.Converters.Add(new JavaScriptDateTimeConverter());
+    serializer.NullValueHandling = NullValueHandling.Ignore;
+    serializer.TypeNameHandling = TypeNameHandling.All;
+    serializer.Formatting = Formatting.Indented;
+    
+  //запись
+    using StreamWriter sw = new StreamWriter(filePath);
+    using JsonWriter writer = new JsonTextWriter(sw);
+    serializer.Serialize(writer, test, typeof(Test));
+  }
 
 }

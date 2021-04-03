@@ -1,5 +1,8 @@
-﻿@page "/CreateTest"
+﻿@page "/CreateTest/{TestId:int?}"
+@using tester.Data
+@using tester.Data.Services
 @inherits AdministatorPage
+@inject TestsDbService tests;
 <nav class="breadcrumb is-large mb-1" aria-label="breadcrumbs">
   <ul>
     <li><a href="Admin">Администратирование</a></li>
@@ -9,13 +12,17 @@
   </ul>
 </nav>
 <hr/>
-<QuizCreator/>
+<QuizCreator RedactableTest="@test"/>
 
 @code {
 
-  private void Save()
+  [Parameter]
+  public int? TestId { get; set; }
+  
+  private Data.Testing.Test test { get; set; }
+  
+  protected override void OnParametersSet()
   {
-    
+    test = TestId == null ? null : tests.TestList[TestId.Value];
   }
-
 }

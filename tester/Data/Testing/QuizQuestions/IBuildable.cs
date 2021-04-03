@@ -2,7 +2,7 @@
 using tester.Pages.QuestionRedactorViewComponents;
 using tester.Pages.QuestionViewComponents;
 
-namespace tester.Data.QuizQuestions
+namespace tester.Data.Testing.QuizQuestions
 {
     public interface IBuildable
     {
@@ -16,5 +16,10 @@ namespace tester.Data.QuizQuestions
         /// Возвращает тип компонента, используемого редактирования вопроса
         /// </summary>
         public Type GetRedactorType();
+        /// <summary>
+        /// Создает копию объекта
+        /// </summary>
+        /// <returns>Возвращает точную копию объекта</returns>
+        public IBuildable Copy();
     }
 }

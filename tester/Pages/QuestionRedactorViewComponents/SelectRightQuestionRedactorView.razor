@@ -1,10 +1,6 @@
 ﻿@inherits QuestionRedactorViewBase
-@using tester.Data.QuizQuestions
 @using tester.Data
-@if (Helpers.IsDebug())
-{
-  <p>@Index</p>
-}
+@using tester.Data.Testing.QuizQuestions
 <h3 class="subtitle">Текст воспроса</h3>
 <textarea class="textarea block" type="text" @bind="Description" style="min-height: 50vh"></textarea>
 <h3 class="subtitle">Возможные ответы</h3>
@@ -19,10 +15,6 @@
 <label class="checkbox mt-2 mb-1">
   <input type="checkbox" @bind="IsMultipleAnswersAllowed">
   Разрешить несколько правильных вариантов ответа</label>
-@if (Helpers.IsDebug())
-{
-  <p>@IsMultipleAnswersAllowed</p>
-}
 
 @for (var index = 0; index < Answers.Count; index++)
 {
@@ -64,7 +56,7 @@
   public override object Model { get; set; }
 
   //для удобства
-  //конкретно это свойство по непонятным причинам не хочет писаться кратким способом по неизвоестным причинам
+  //конкретно это свойство по непонятным причинам не хочет писаться кратким способом по неизвестным причинам
   private string Description
   {
     get => ((SelectRight) Model).Description;

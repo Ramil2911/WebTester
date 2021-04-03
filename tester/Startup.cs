@@ -1,9 +1,11 @@
+using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using tester.Data;
+using tester.Data.Services;
 
 namespace tester
 {
@@ -22,8 +24,11 @@ namespace tester
         {
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddScoped<SessionData>();
-            services.AddSingleton<Settings>();
+            services.AddScoped<SessionDataService>();
+            services.AddSingleton<CircuitHandlerService>();
+            services.AddSingleton<TestSessionsService>();
+            services.AddSingleton<TestsDbService>();
+            services.AddScoped<HttpClient>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

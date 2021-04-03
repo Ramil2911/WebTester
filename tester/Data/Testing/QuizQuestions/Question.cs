@@ -1,4 +1,4 @@
-﻿namespace tester.Data.QuizQuestions
+﻿namespace tester.Data.Testing.QuizQuestions
 {
     public class Question
     {

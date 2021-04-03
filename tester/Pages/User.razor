@@ -1,6 +1,8 @@
 ﻿@page "/User"
 @using tester.Data
-@inject SessionData Session
+@using tester.Data.Services
+@inject SessionDataService Session
+@inject TestsDbService TestsDbService;
 @inject NavigationManager NavManager
 <h3 class="title">*потом придумаю, что тут написать*</h3>
 <h3 class="subtitle">Для запуска теста нажмите кнопку "Начать"</h3>
@@ -22,12 +24,9 @@
                     <div class="field">
                       <label class="label">Имя и фамилия</label>
                         <div class="control">
-                            <input @bind="Name" class="input @(Name == "" ? "is-danger" : "")"  type="text" placeholder="Вася Пупкин">
+                            <input @bind:event="oninput" @bind="Name" class="input @(Name == "" ? "is-danger" : "")"  type="text"
+                                    placeholder="Вася Пупкин">
                         </div>
-                        @functions{
-
-                            public string CheckDanger() => Name == "" ? "is-danger" : "";
-                        }
                         @{
                             if (Name == "")
                             {
@@ -40,7 +39,7 @@
                     </div>
                 </section>
                 <footer class="modal-card-foot">
-                    <button @onclick="Continue" disabled="@(Name=="" ? true : false)" class="button is-success">Начать</button>
+                    <button @onclick="Continue" disabled="@(Name=="")" class="button is-success">Начать</button>
                     <button @onclick="CloseEntrance" class="button">Отмена</button>
                 </footer>
             </div>
@@ -50,11 +49,16 @@
 @code {
     //Modal
     public bool EntranceOpened = false;
+    private string _name = "";
     public void OpenEntrance() => EntranceOpened = true;
     public void CloseEntrance() => EntranceOpened = false;
     //Modal
 
-    public string Name { get; set; } = "";
+    public string Name
+    {
+        get => _name;
+        set { _name = value; StateHasChanged();}
+    }
 
     private void Continue()
     {
@@ -63,6 +67,7 @@
         Session.NameSurname = Name;
         Session.IsTestActive = true; //It is the only place where IsTestActive can be made true
         NavManager.NavigateTo("/Test");
+        Session.UserTest = TestsDbService.ActiveTest;
     }
 
 }

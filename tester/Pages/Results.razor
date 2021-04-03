@@ -1,0 +1,14 @@
+﻿@page "/Results"
+@using tester.Data
+@using tester.Data.Services
+@inject SessionDataService Session
+<h3>Результаты</h3>
+
+@code {
+    protected override void OnParametersSet()
+    {
+        Session.FinishTest();
+        base.OnParametersSet();
+    }
+
+}

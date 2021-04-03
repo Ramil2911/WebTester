@@ -1,4 +1,7 @@
 ﻿@code {
     [Parameter]
-    public EventCallback<EventArgs> OnContinue { get; set; }
+    public EventCallback<bool> OnContinue { get; set; }
+    
+    [Parameter]
+    public object Model { get; set; }
 }

@@ -1,5 +1,8 @@
 ﻿@page "/Tests"
+@using tester.Data
+@using tester.Data.Services
 @inherits AdministatorPage
+@inject TestsDbService TestsDbService
 <nav class="breadcrumb is-large mb-1" aria-label="breadcrumbs">
   <ul>
     <li><a href="Admin">Администратирование</a></li>
@@ -8,7 +11,45 @@
     <li><a href="User">Войти как пользователь</a></li>
   </ul>
 </nav>
-
+<h3 class="subtitle">Список всех тестов</h3>
+<hr/>
+  <table class="table">
+    <thead>
+    <tr>
+      <th>№</th>
+      <th>Название</th>
+      <th>Вопросов</th>
+      <th>Активен</th>
+      <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    @for (var i = 0; i < TestsDbService.TestList.Count; i++)
+    {
+      var index = i;
+      <tr>
+        <th>@(i+1)</th>
+        <td>@TestsDbService.TestList[i].Name</td>
+        <td>@TestsDbService.TestList[i].Questions.Count</td>
+        <td>@if(TestsDbService.TestList[i] == TestsDbService.ActiveTest) {<p>Да</p>} else {<p>Нет</p>}</td>
+        <td><p><a href="CreateTest/@i">Редактировать</a></p></td>
+        <td><p><a @onclick="@(() => Activate(TestsDbService.TestList[index]))">Активировать</a></p></td>
+      </tr>
+    }
+    </tbody>
+  </table>
 @code {
-    
+
+  //TODO завершить кнопку редактирования
+  protected override void OnInitialized()
+  {
+    TestsDbService.UpdateTests();
+    base.OnInitialized();
+  }
+
+  private void Activate(Data.Testing.Test test)
+  {
+    TestsDbService.ActiveTest = test;
+  }
+
 }

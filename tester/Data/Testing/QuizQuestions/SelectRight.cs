@@ -4,8 +4,7 @@ using System.Linq;
 using tester.Pages.QuestionRedactorViewComponents;
 using tester.Pages.QuestionViewComponents;
 
-
-namespace tester.Data.QuizQuestions
+namespace tester.Data.Testing.QuizQuestions
 {
     
     //тут находятся мои попытки использования XML-документации
@@ -44,11 +43,12 @@ namespace tester.Data.QuizQuestions
         /// <param name="rightAnswersIndices">Список НЕ С ИНДЕКСАМИ ПРАВИЛЬНЫХ ОТВЕТОВ, а со значениями true по
         /// индексам правильных ответов</param>
         /// </summary>
-        public SelectRight(string description, List<string> answers, List<bool> rightAnswersIndices)
+        public SelectRight(string description, List<string> answers, List<bool> rightAnswersIndices, bool isMultipleAnswersAllowed)
         {
             Description = description;
             Answers = answers;
             RightAnswersIndices = rightAnswersIndices;
+            IsMultipleAnswersAllowed = isMultipleAnswersAllowed;
         }
         
         [Obsolete("Больше не используется, но на всякий случай оставлю")] //TODO Удалить
@@ -62,19 +62,23 @@ namespace tester.Data.QuizQuestions
         {
             return new SelectRightQuestionRedactorView();
         }
-        /// <summary>
         /// <inheritdoc cref="IBuildable"/>
-        /// </summary>
         public Type GetViewType()
         {
             return typeof(SelectRightComponent);
         }
-        /// <summary>
         /// <inheritdoc cref="IBuildable"/>
-        /// </summary>
         public Type GetRedactorType()
         {
             return typeof(SelectRightQuestionRedactorView);
+        }
+        /// <inheritdoc cref="IBuildable"/>
+        public IBuildable Copy()
+        {
+            //так как этот тип состоит из примитивных типов и списков примитивных типов, можно просто передать
+            //примитивные типы и создать новые списки с ними, получится несвязанная с оригиналом копия
+            //примечание: string - reference type, который ведет себя как value type
+            return new SelectRight(Description, Answers.ToList(), RightAnswersIndices.ToList(), IsMultipleAnswersAllowed);
         }
     }
 }
