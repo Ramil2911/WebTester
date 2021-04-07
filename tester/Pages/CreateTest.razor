@@ -12,17 +12,17 @@
   </ul>
 </nav>
 <hr/>
-<QuizCreator RedactableTest="@test"/>
+<QuizCreator RedactableTest="@Test"/>
 
 @code {
 
   [Parameter]
   public int? TestId { get; set; }
   
-  private Data.Testing.Test test { get; set; }
+  private Data.Testing.Test Test { get; set; }
   
   protected override void OnParametersSet()
   {
-    test = TestId == null ? null : tests.TestList[TestId.Value];
+    Test = TestId == null ? null : tests.TestList[TestId.Value];
   }
 }

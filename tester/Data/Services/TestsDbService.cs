@@ -45,5 +45,19 @@ namespace tester.Data.Services
             //TODO: сохранение выбранного теста
             ActiveTest = TestList.Count == 0 ? null : TestList[0];
         }
+
+        /// <summary>
+        /// Удаляет существующий на диске тест
+        /// </summary>
+        /// <param name="test">Тест для удаления (обязательно не должен быть копией)</param>
+        public void Delete(Test test)
+        {
+            //Удалить тест из списка
+            TestList.Remove(test);
+            
+            //Удалить файл теста
+            var testsDir = new FileInfo(System.Reflection.Assembly.GetExecutingAssembly().Location).Directory.FullName + "/Tests";
+            Directory.Delete(testsDir+$"/{test.Name}", true);
+        }
     }
 }

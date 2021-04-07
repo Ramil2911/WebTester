@@ -1,0 +1,85 @@
+﻿@using tester.Data.Testing.QuizQuestions
+@inherits QuestionRedactorViewBase
+
+<button class="button is-success" @onclick="AddCheck">
+    <span class="icon">
+        <i class="fi-br-plus"></i>
+    </span>
+    <span>Добавить проверку</span>
+</button>
+
+<div class="content">
+    <div class="columns mb-1">
+        <div class="column is-1">
+            <h2>№</h2>
+        </div>
+        <div class="column">
+            <h2>Ввод</h2>
+        </div>
+        <div class="column">
+            <h2>Вывод</h2>
+        </div>
+    </div>
+    @for (var i = 0; i < Tests.Count; i++)
+    {
+        var index = i;
+        var (key, value) = Tests[i];
+        <div class="columns">
+            <div class="column is-1">
+                <div class="is-flex is-flex-direction-row is-align-items-baseline">
+                    <h2>@index</h2>
+                    <button @onclick="@(() => { Tests.RemoveAt(index); })" class="delete ml-1" aria-label="close"></button>
+                </div>
+            </div>
+            <div class="column">
+                @for (var i1 = 0; i1 < key.Count; i1++)
+                {
+                    var index1 = i1;
+                    <div class="is-flex is-flex-direction-row">
+                        <textarea class="textarea " rows="1" placeholder="Одна строка входных данных" 
+                                                value="@key[index1]"
+                                                @onchange="@(x => { key[index1] = (string)x.Value;})"></textarea>
+                        <button @onclick="@(() => {key.RemoveAt(index1);})" class="delete" aria-label="close"></button>
+                    </div>
+                }
+                <button class="button is-success" @onclick="@(() => key.Add(""))">
+                    <span class="icon">
+                        <i class="fi-br-plus"></i>
+                    </span>
+                    <span>Добавить ввод</span>
+                </button>
+            </div>
+            <div class="column">
+                @for (var i2 = 0; i2 < value.Count; i2++)
+                {
+                    var index2 = i2;
+                    <div class="is-flex is-flex-direction-row">
+                        <textarea class="textarea" rows="1" placeholder="Одна строка ожидаемого вывода" 
+                                                value="@value[index2]"
+                                                @onchange="@(x => { value[index2] = (string)x.Value;})"></textarea>
+                        <button @onclick="@(() => {value.RemoveAt(index2);})" class="delete" aria-label="close"></button>
+                    </div>
+                }
+                <button class="button is-success" @onclick="@(() => value.Add(""))">
+                    <span class="icon">
+                        <i class="fi-br-plus"></i>
+                    </span>
+                    <span>Добавить вывод</span>
+                </button>
+            </div>
+
+        </div>
+    }
+</div>
+
+@code {
+    //Для удобства
+    public string Code => ((CodePad) Model).Code;
+    public Language Lang => ((CodePad) Model).Lang;
+    public List<KeyValuePair<List<string>, List<string>>> Tests => ((CodePad) Model).Tests;
+
+
+    private void AddCheck()
+        => Tests.Add(new KeyValuePair<List<string>, List<string>>(new List<string>(), new List<string>()));
+
+}

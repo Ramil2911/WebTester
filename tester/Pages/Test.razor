@@ -28,13 +28,16 @@ else
     
     protected override void OnParametersSet()
     {
-        QuestionFragment = ShowDynamicComponent();
-
+        if(!SessionData.IsTestActive) NavManager.NavigateTo("404");
+        
         if (HttpClient.BaseAddress is not null) _session.IpAddress = HttpClient.BaseAddress.Authority;
         _session.NameSurname = SessionData.NameSurname;
         _session.QuestionIndex = 0;
         _session.TestName = SessionData.UserTest.Name;
+    //TODO: Scoped-сервисы пересоздаются при обновлении окна, из-за этого тут выпадает NullReferenceException
         
+        QuestionFragment = ShowDynamicComponent();
+
         TestSessionsService.Sessions.Add(_session);
         
         base.OnParametersSet();

@@ -13,43 +13,80 @@
 </nav>
 <h3 class="subtitle">Список всех тестов</h3>
 <hr/>
-  <table class="table">
-    <thead>
+<table class="table">
+  <thead>
+  <tr>
+    <th>№</th>
+    <th>Название</th>
+    <th>Вопросов</th>
+    <th>Активен</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+  </thead>
+  <tbody>
+  @for (var i = 0; i < TestsDbService.TestList.Count; i++)
+  {
+    var index = i;
     <tr>
-      <th>№</th>
-      <th>Название</th>
-      <th>Вопросов</th>
-      <th>Активен</th>
-      <th></th>
+      <th>@(i+1)</th>
+      <td>@TestsDbService.TestList[i].Name</td>
+      <td>@TestsDbService.TestList[i].Questions.Count</td>
+      <td>@if(TestsDbService.TestList[i] == TestsDbService.ActiveTest) {<p>Да</p>} else {<p>Нет</p>}</td>
+      <td><p><a href="CreateTest/@i">Редактировать</a></p></td>
+      <td><p><a @onclick="@(() => Activate(TestsDbService.TestList[index]))">Активировать</a></p></td>
+      <td><p><a @onclick="@(() => ModalDelete(TestsDbService.TestList[index]))" class="has-text-danger">Удалить</a></p></td>
     </tr>
-    </thead>
-    <tbody>
-    @for (var i = 0; i < TestsDbService.TestList.Count; i++)
-    {
-      var index = i;
-      <tr>
-        <th>@(i+1)</th>
-        <td>@TestsDbService.TestList[i].Name</td>
-        <td>@TestsDbService.TestList[i].Questions.Count</td>
-        <td>@if(TestsDbService.TestList[i] == TestsDbService.ActiveTest) {<p>Да</p>} else {<p>Нет</p>}</td>
-        <td><p><a href="CreateTest/@i">Редактировать</a></p></td>
-        <td><p><a @onclick="@(() => Activate(TestsDbService.TestList[index]))">Активировать</a></p></td>
-      </tr>
-    }
-    </tbody>
-  </table>
+  }
+  </tbody>
+</table>
+
+<a href="/CreateTest" class="button is-success">Новый тест</a>
+
+<div class="modal @(ModalOpened && ModalTest is not null ? "is-active" : "")">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <section class="modal-card-body">
+      <p>Вы действительно хотите удалить @ModalTest?.Name?</p>
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button" @onclick="@(()=>Delete(ModalTest))">Да</button>
+      <button class="button is-success" @onclick="@(CloseModal)">Отмена</button>
+    </footer>
+  </div>
+</div>
 @code {
 
+  private bool ModalOpened { get; set; } = false;
+  private Data.Testing.Test ModalTest { get; set; } = null;
+  
+
   //TODO завершить кнопку редактирования
-  protected override void OnInitialized()
+  protected override void OnParametersSet()
   {
     TestsDbService.UpdateTests();
-    base.OnInitialized();
+    base.OnParametersSet();
   }
 
   private void Activate(Data.Testing.Test test)
   {
     TestsDbService.ActiveTest = test;
+  }
+  
+  private void CloseModal() => ModalOpened = false;
+  
+
+  private void ModalDelete(Data.Testing.Test test)
+  {
+    ModalTest = test;
+    ModalOpened = true;
+  }
+
+  private void Delete(Data.Testing.Test test)
+  {
+    CloseModal();
+    TestsDbService.Delete(test);
   }
 
 }

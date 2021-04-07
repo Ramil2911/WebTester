@@ -29,6 +29,7 @@ namespace tester
             services.AddSingleton<TestSessionsService>();
             services.AddSingleton<TestsDbService>();
             services.AddScoped<HttpClient>();
+            services.AddSingleton<CodePadService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

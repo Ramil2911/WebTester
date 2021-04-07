@@ -1,0 +1,42 @@
+﻿@using tester.Data.Testing
+@using tester.Data.Services
+@using tester.Data.Testing.QuizQuestions
+@inherits QuestionBase
+@inject IJSRuntime Js;
+@inject CodePadService Compiler;
+
+<div class="buttons">
+    <button @onclick="Run" class="button is-success">
+        <span class="icon is-big">
+            <i class="fi-br-caret-right"></i>
+        </span>
+        <span>Run</span>
+    </button>
+    
+</div>
+<div @ref="_editor" id="editor"></div>
+<ul id="console"></ul>
+
+@code {
+    private ElementReference _editor;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        Js.InvokeVoidAsync("SetupEditor");
+    }
+
+
+    private async Task Run()
+    {
+        var code = await Js.InvokeAsync<string>("Run");
+        var handler = new CodePadService.CompilerHandler();
+        handler.OnOutputUpdated += UpdateOutput;
+        await Compiler.ScheduleCompiling(code, ((CodePad) Model).Tests, handler);
+    }
+
+    private async void UpdateOutput(string output)
+    {
+        await Js.InvokeVoidAsync("log", output);
+    }
+
+}

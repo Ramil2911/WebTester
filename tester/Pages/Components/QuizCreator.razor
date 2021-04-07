@@ -78,7 +78,7 @@
   private Type SelectedQuestionType
   {
     get => _selectedQuestionType;
-    set { _selectedQuestionType = value;}
+    set { _selectedQuestionType = value; NotifyTypeChanged();}
   }
   
   ///<summary>
@@ -86,8 +86,15 @@
   /// </summary>
   private string SelectedQuestionTypeByName
   {
-    get => _selectedQuestionType?.FullName;
-    set => _selectedQuestionType = Type.GetType(value);
+    get => SelectedQuestionType?.FullName;
+    set => SelectedQuestionType = Type.GetType(value);
+  }
+
+  private void NotifyTypeChanged()
+  {
+    if (_questions.Count == 0) return;
+    _questions[_currentIndex] = (IBuildable) Activator.CreateInstance(SelectedQuestionType);
+    NotifyIndexChanged();
   }
   
   //фрагмент, в который пишется редактор вопроса
@@ -108,7 +115,10 @@
   
   /*вообще вроде как можно использовать реактивные расширения для Blazor, но мне это надо привести в рабочий
    вид до конца каникул, не вижу смысла в попытках их использования сейчас*/
-  private void NotifyIndexChanged() => RedactorFragment = ShowDynamicComponent();
+  private void NotifyIndexChanged()
+  {
+    RedactorFragment = ShowDynamicComponent();
+  }
 
   protected override void OnParametersSet()
   {
@@ -157,7 +167,7 @@
   private RenderFragment ShowDynamicComponent() => builder =>
   {
     if(_questions.Count==0) return;
-    SelectedQuestionTypeByName = _questions[CurrentIndex].GetType().FullName;
+    _selectedQuestionType = _questions[_currentIndex].GetType();
     builder.OpenComponent(0, _questions[CurrentIndex].GetRedactorType()); //тут объект создается только если он не был уже создан
     builder.AddAttribute(1, "Model", _questions[CurrentIndex]);
     builder.AddAttribute(2, "Index", CurrentIndex); //TODO: удалить перед сдачей проекта (+внутри редакторов)
