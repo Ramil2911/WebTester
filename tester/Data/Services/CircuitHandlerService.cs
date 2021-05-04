@@ -8,8 +8,7 @@ namespace tester.Data.Services
 {
     public class CircuitHandlerService : CircuitHandler
     {
-        public ConcurrentDictionary<string, Circuit> Circuits { get; 
-            set; }
+        public ConcurrentDictionary<string, Circuit> Circuits { get; set; }
 
         public CircuitHandlerService()
         {

@@ -1,13 +1,44 @@
 ﻿@page "/Results"
-@using tester.Data
 @using tester.Data.Services
-@inject SessionDataService Session
+@inject SessionDataService _session
+@inject NavigationManager _navManager
 <h3>Результаты</h3>
+<p>Правильных ответов @_session.CorrectAnswersMap.Count(x=> x) из @_session.Answers</p>
+<table class="table column is-light">
+    <thead>
+    <tr>
+        <th>№</th>
+        <th>Правильность</th>
+    </tr>
+    </thead>
+    <tbody>
+    @for (var index = 0; index < _session.CorrectAnswersMap.Count; index++)
+    {
+        var i = index;
+        var item = _session.CorrectAnswersMap[index];
+        <tr>
+            <td>@i</td>
+            <td>@(_session.CorrectAnswersMap[i] ? "+" : "-")</td>
+        </tr>
+    }
+    </tbody>
+    <p>Всего баллов: @_mark</p>
+</table>
 
 @code {
+    private uint _mark = 0;
+    
     protected override void OnParametersSet()
     {
-        Session.FinishTest();
+        if(_session.UserTest is null) _navManager.NavigateTo("/404");
+        _session.Answers = ushort.Parse(_session.UserTest.Questions.Count.ToString());
+        
+        foreach (var t in _session.ChosenQuestions)
+        {
+            _mark += t.Price;
+        }
+        
+        _session.FinishTest();
         base.OnParametersSet();
     }
 

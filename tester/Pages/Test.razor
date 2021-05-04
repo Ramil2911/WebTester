@@ -1,79 +1,121 @@
 ﻿@page "/Test"
 @implements IDisposable
-@using tester.Data
 @using tester.Data.Services
-@inject SessionDataService SessionData
-@inject NavigationManager NavManager
-@inject TestsDbService TestDbService;
-@inject TestSessionsService TestSessionsService;
-@inject HttpClient HttpClient;
+@inject SessionDataService _sessionData
+@inject NavigationManager _navManager
+@inject TestsDbService _testDbService;
+@inject TestSessionsService _testSessionsService;
+@inject HttpClient _httpClient;
 
-@if (!SessionData.IsTestActive)
+@if (!_sessionData.IsTestActive)
 {
-    NavManager.NavigateTo("/");
+    _navManager.NavigateTo("/");
 }
 else
 {
-    <h3 class="title">Вопрос @SessionData.QuestionIndex</h3>
+    <h3 class="title">Вопрос @_sessionData.QuestionIndex</h3>
     <div>
         @QuestionFragment
+    </div>
+    for(var index = 0; index < _sessionData.UserTest.Questions.Count; index++)
+    {
+        var i = index;
+        <button class="button @(i == _sessionData.QuestionIndex ? "is-primary" : "is-success") mt-1 mr-1 mb-1" 
+                style="width: fit-content" @onclick="@(() => ChooseQuestion(Convert.ToUInt16(i)))">
+            <span>@(i+1)</span>
+        </button>
+    }
+    <div class="button is-warning mt-3" @onclick="Finish">
+        Завершить
     </div>
 }
 
 @code {
+
+    private static readonly Random Random = new();
+
+    private readonly Session _session = new();
     
     private RenderFragment QuestionFragment { get; set; }
-
-    private Session _session = new Session();
     
     protected override void OnParametersSet()
     {
-        if(!SessionData.IsTestActive) NavManager.NavigateTo("404");
+        if(!_sessionData.IsTestActive) _navManager.NavigateTo("404");
         
-        if (HttpClient.BaseAddress is not null) _session.IpAddress = HttpClient.BaseAddress.Authority;
-        _session.NameSurname = SessionData.NameSurname;
+        if (_httpClient.BaseAddress is not null) _session.IpAddress = _httpClient.BaseAddress.Authority;
+        _session.NameSurname = _sessionData.NameSurname;
         _session.QuestionIndex = 0;
-        _session.TestName = SessionData.UserTest.Name;
+        _session.TestName = _sessionData.UserTest.Name;
     //TODO: Scoped-сервисы пересоздаются при обновлении окна, из-за этого тут выпадает NullReferenceException
+
+        foreach (var questions in _sessionData.UserTest.Questions)
+        {
+            var index = Random.Next(0, questions.Count);
+            _sessionData.ChosenQuestionIndices.Add(Convert.ToUInt32(index));
+            _sessionData.ChosenQuestions.Add(questions[index]);
+        }
+
+        foreach (var question in _sessionData.ChosenQuestions)
+        {
+            _sessionData.AnswersData.Add(Activator.CreateInstance(question.GetAnswersDataType()));
+        }
         
+        _sessionData.CorrectAnswersMap = new List<bool>();
         QuestionFragment = ShowDynamicComponent();
 
-        TestSessionsService.Sessions.Add(_session);
+        _testSessionsService.Sessions.Add(_session);
         
         base.OnParametersSet();
     }
 
+    private void ChooseQuestion(ushort i)
+    {
+        _sessionData.QuestionIndex = i;
+        ShowDynamicComponent();
+    }
+
+    private void Finish()
+    {
+        for (var i = 0; i < _sessionData.UserTest.Questions.Count; i++)
+        {
+            _sessionData.CorrectAnswersMap.Add(_sessionData.ChosenQuestions[i].Check(_sessionData.AnswersData[i]));
+        }
+        _navManager.NavigateTo("/Results");
+        return;
+    }
+
     private void NextQuestion(bool success)
     {
-        if (success) SessionData.CorrectAnswers += 1;
-        SessionData.QuestionIndex += 1;
-        _session.QuestionIndex = SessionData.QuestionIndex;
-        if (SessionData.UserTest.Questions.Count <= SessionData.QuestionIndex)
+        /*if (success) _sessionData.CorrectAnswers += 1;
+        _sessionData.QuestionIndex += 1;
+        _session.QuestionIndex = _sessionData.QuestionIndex;
+        if (_sessionData.UserTest.Questions.Count <= _sessionData.QuestionIndex)
         {
-            NavManager.NavigateTo("/Results");
+            _navManager.NavigateTo("/Results");
             return;
         }
-        QuestionFragment = ShowDynamicComponent();
+        QuestionFragment = ShowDynamicComponent();*/
     }
     
     private RenderFragment ShowDynamicComponent() => builder =>
     {
-        if (SessionData.UserTest.Questions.Count <= SessionData.QuestionIndex)
+        if (_sessionData.UserTest.Questions.Count <= _sessionData.QuestionIndex)
         {
             return;
         }
         //об EventCallback.Factory написано здесь https://stackoverflow.com/questions/59816177/set-eventcallbackstring-outside-of-a-blazor-componet
-        builder.OpenComponent(0, SessionData.UserTest.Questions[SessionData.QuestionIndex].GetViewType());
-        builder.AddAttribute(1, "Model", SessionData.UserTest.Questions[SessionData.QuestionIndex]);
-        builder.AddAttribute(2, "OnContinue", EventCallback.Factory.Create(this, (bool x) => NextQuestion(x)));
+        builder.OpenComponent(0, _sessionData.ChosenQuestions[_sessionData.QuestionIndex].GetViewType());
+        builder.AddAttribute(1, "Model", _sessionData.UserTest.Questions[_sessionData.QuestionIndex][Convert.ToInt32(_sessionData.ChosenQuestionIndices[_sessionData.QuestionIndex])]);
+        builder.AddAttribute(2, "AnswersModel", _sessionData.AnswersData[_sessionData.QuestionIndex]);
+        builder.AddAttribute(3, "OnContinue", EventCallback.Factory.Create(this, (bool x) => NextQuestion(x)));
         builder.CloseComponent();
         //комментарии к подобному коду находятся в QuestionCreator.razor
     };
 
     public void Dispose()
     {
-        HttpClient?.Dispose();
-        TestSessionsService.Sessions.Remove(_session);
+        _httpClient?.Dispose();
+        _testSessionsService.Sessions.Remove(_session);
     }
 
 }

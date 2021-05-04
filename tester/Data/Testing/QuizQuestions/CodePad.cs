@@ -5,7 +5,7 @@ using tester.Pages.QuestionViewComponents;
 
 namespace tester.Data.Testing.QuizQuestions
 {
-    public class CodePad : Question, IBuildable
+    public class CodePad : Question, IBuildable //WIP
     {
         /// <summary>
         /// Текст кода
@@ -49,6 +49,19 @@ namespace tester.Data.Testing.QuizQuestions
         {
             return typeof(CodePadQuestionRedactor);
         }
+
+        public Type GetAnswersDataType()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Check(object answer)
+        {
+            throw new NotImplementedException();
+        }
+
+        public uint Price { get; set; } = 0;
+
         /// <inheritdoc cref="IBuildable"/>
         public IBuildable Copy()
         {

@@ -1,6 +1,6 @@
 ﻿@page "/"
-@inject NavigationManager NavManager
-@inject IJSRuntime Js;
+@inject NavigationManager _navManager
+@inject IJSRuntime _js;
 
 <h1 class="title">Вы не должны видеть эту страницу.
     Если она не исчезает - что-то не так.</h1>
@@ -8,19 +8,21 @@
 
 @code
 {
-    public string uri = "";
-    
-    protected override void OnInitialized()
+    private string uri = "";
+
+    protected override Task OnParametersSetAsync()
     {
-        uri = NavManager.BaseUri;
+        uri = _navManager.BaseUri;
         if (uri.Contains("localhost") | uri.Contains("127.0.0.1"))
         {
-            NavManager.NavigateTo("/Admin");
+            _navManager.NavigateTo("/Admin");
         }
         else
         {
             uri = "False";
         }
         base.OnInitialized();
+        return base.OnParametersSetAsync();
     }
+
 }

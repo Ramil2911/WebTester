@@ -39,6 +39,9 @@
     </div>
     <button class="button is-danger" @onclick="RemoveQuestion">Удалить</button>
   </div>
+  <div>
+
+  </div>
   <label class="label mt-2 mb-0">Вопросы</label>
   <div class="is-flex is-flex-direction-row is-flex-wrap-wrap">
     @for(var index = 0; index < _questions.Count; index++)
@@ -54,10 +57,51 @@
     </button>
   </div>
   <button class="button is-success mt-4 mr-1 mb-1" style="width: fit-content" @onclick="Save"
-          disabled="@(TestName == "" | Helpers.IsInvalidFilename(TestName) | _questions.Count == 0)">
+          disabled="@(TestName == "" | Helpers.IsInvalidFilename(TestName) | _questions.Count == 0 | !IsCorrectPrice
+                      | _questions.Any(x => x.Count == 0))">
     <span>Сохранить тест</span>
   </button>
   <hr/>
+  <label class="label mt-2 mb-0">Варианты</label>
+  <div class="is-flex is-flex-direction-row is-flex-wrap-wrap">
+    @if (_questions.Count != 0)
+    {
+      for(var index = 0; index < _questions[_currentIndex].Count; index++)
+      {
+        var i = index;
+        <button class="button @(i == _currentOption ? "is-primary" : "is-success") mt-1 mr-1 mb-1" 
+                style="width: fit-content" @onclick="@(() => CurrentOption=i)">
+          <span>@(i+1)</span>
+        </button>
+      }
+    }
+    <button class="button is-success mt-1 mr-1 mb-1" style="width: fit-content" @onclick="AddOption">
+      <span>+</span>
+    </button>
+    <button class="button is-danger mt-1 mr-1 mb-1" style="width: fit-content" @onclick="RemoveOption">
+      <span>-</span>
+    </button>
+  </div>
+    <div class="field">
+      <label class="label">Баллов за вопрос (количество баллов настраивается для каждого варианта)</label>
+      <div class="columns">
+        <div class="column is-half-widescreen">
+          <div class="control">
+            <input @bind="Price" @bind:event="oninput"
+                    class="input @(IsCorrectPrice ? "" : "is-danger")"
+                    type="text" @onchange="e => { IsCorrectPrice = uint.TryParse((string)e.Value, out _); }">
+          </div>
+          @{
+            if (!IsCorrectPrice)
+            {
+              <p class="help is-danger">
+                Неверная цена
+              </p>
+            }
+          }
+        </div>
+      </div>
+    </div>
   @for (var i = 0; i < 1; i++)
   {
     @RedactorFragment
@@ -73,6 +117,36 @@
   //Название теста
   private string TestName { get; set; } = "";
 
+  private string Price
+  {
+    get
+    {
+      string priceString;
+      try
+      {
+        priceString = _questions[_currentIndex][_currentOption].PriceString;
+      }
+      catch
+      {
+        priceString = "0";
+      }
+      return priceString;
+    }
+    set
+    {
+      try
+      {
+        _questions[_currentIndex][_currentOption].PriceString = value;
+      }
+      catch
+      {
+        // ignored
+      }
+    }
+  }
+
+  private bool IsCorrectPrice { get; set; } = false;
+      
   //Тип активного вопроса
   private Type _selectedQuestionType;
   private Type SelectedQuestionType
@@ -92,9 +166,10 @@
 
   private void NotifyTypeChanged()
   {
-    if (_questions.Count == 0) return;
-    _questions[_currentIndex] = (IBuildable) Activator.CreateInstance(SelectedQuestionType);
-    NotifyIndexChanged();
+    if(_questions.Count == 0) return;
+    if(_questions[_currentIndex].Count == 0) return;
+    _questions[_currentIndex][_currentOption] = (IBuildable) Activator.CreateInstance(SelectedQuestionType);
+    NotifyOptionChanged();
   }
   
   //фрагмент, в который пишется редактор вопроса
@@ -103,19 +178,30 @@
   //тут хранятся все типы, наследованные от Question
   private static IEnumerable<Type> QuestionTypes { get; set; } = Helpers.GetInheritedOfType<Question>();
   //все вопросы теста
-  private List<IBuildable> _questions = new();
+  private List<List<IBuildable>> _questions = new();
+  
   //индекс текущего отображаемого вопроса
   private ushort _currentIndex = 0;
 
   private int CurrentIndex
   {
     get => _currentIndex;
-    set { _currentIndex = (ushort) value; NotifyIndexChanged();}
+    set { _currentIndex = (ushort) value;
+      _currentOption = 0; NotifyOptionChanged();}
   }
-  
+
+  //вариант текущего отображаемого вопроса
+  private ushort _currentOption = 0;
+
+  private int CurrentOption
+  {
+    get => _currentOption;
+    set { _currentOption = (ushort) value; NotifyOptionChanged();}
+  }
+
   /*вообще вроде как можно использовать реактивные расширения для Blazor, но мне это надо привести в рабочий
    вид до конца каникул, не вижу смысла в попытках их использования сейчас*/
-  private void NotifyIndexChanged()
+  private void NotifyOptionChanged()
   {
     RedactorFragment = ShowDynamicComponent();
   }
@@ -126,36 +212,63 @@
     TestName = "";
     
   /*TODO: сделать НОРМАЛЬНОЕ редактирование, пока что это работает, так как тест с тем же именем просто переписывается, но все равно как-то нехорошо*/
-    if (RedactableTest != null) //CreateTest выставляет значение null только если нет параметра индекса страницы
+    if (RedactableTest != null) //переменная имеет значение null только если нет параметра индекса страницы
     {
-      var questions = RedactableTest.Questions.Select(item => item.Copy()).ToList();
-      _questions = questions;
+      _questions = RedactableTest.Questions.Select(item => item.Select(x => x.Copy())
+        .ToList()).ToList();
       TestName = RedactableTest.Name;
-      SelectedQuestionType = _questions[0].GetType();
+      _selectedQuestionType = _questions[0][0].GetType();
+      IsCorrectPrice = true;
     }
     else //если параметра нет, то создается новый тест
     {
-      SelectedQuestionType = QuestionTypes.ElementAt(0);
-      _questions.Add((IBuildable)Activator.CreateInstance(SelectedQuestionType));
+      _questions.Add(new List<IBuildable>() {new SelectRight() {Description = "Создайте свой тест, редактируя параметры на этой странице"}});
+      _selectedQuestionType = _questions[CurrentIndex][CurrentOption].GetType();
     }
-    RedactorFragment = ShowDynamicComponent();
+    NotifyOptionChanged();
     base.OnParametersSet();
   }
 
   private void AddQuestion()
   {
-    _questions.Add((IBuildable)Activator.CreateInstance(SelectedQuestionType));
+    _questions.Add(new List<IBuildable>());
     CurrentIndex = _questions.Count - 1;
+  }
+  
+  private void AddOption()
+  {
+    if(_questions.Count == 0) return;
+    _questions[_currentIndex].Add((IBuildable)Activator.CreateInstance(SelectedQuestionType));
+    CurrentOption = _questions[_currentIndex].Count - 1;
   }
   
   private void RemoveQuestion()
   {
-    if (_questions.Count == 1)
+    switch (_questions.Count)
     {
-      RedactorFragment = null;
+      case 0:
+        return;
+      case 1:
+        RedactorFragment = null;
+        break;
     }
     _questions.RemoveAt(_currentIndex);
     CurrentIndex = _questions.Count - 1;
+  }
+  
+  private void RemoveOption()
+  {
+    if(_questions.Count == 0) return;
+    switch (_questions[_currentIndex].Count)
+    {
+      case 0:
+        return;
+      case 1:
+        RedactorFragment = null;
+        break;
+    }
+    _questions[_currentIndex].RemoveAt(_currentOption);
+    CurrentOption = _questions[_currentIndex].Count - 1;
   }
 
   //мной не было найдено ничего внятного по динамическим компонентам в blazor кроме этого
@@ -167,9 +280,10 @@
   private RenderFragment ShowDynamicComponent() => builder =>
   {
     if(_questions.Count==0) return;
-    _selectedQuestionType = _questions[_currentIndex].GetType();
-    builder.OpenComponent(0, _questions[CurrentIndex].GetRedactorType()); //тут объект создается только если он не был уже создан
-    builder.AddAttribute(1, "Model", _questions[CurrentIndex]);
+    if(_questions[_currentIndex].Count==0) return;
+    _selectedQuestionType = _questions[_currentIndex][_currentOption].GetType();
+    builder.OpenComponent(0, _questions[CurrentIndex][_currentOption].GetRedactorType()); //тут объект создается только если он не был уже создан
+    builder.AddAttribute(1, "Model", _questions[CurrentIndex][CurrentOption]);
     builder.AddAttribute(2, "Index", CurrentIndex); //TODO: удалить перед сдачей проекта (+внутри редакторов)
     builder.CloseComponent();
     
@@ -188,8 +302,7 @@
   //директория json
     var jsonDir = testsDir + $"/{TestName}";
     if (!Directory.Exists(jsonDir)) Directory.CreateDirectory(jsonDir);
-
-
+    
     var filePath = jsonDir + $"/{TestName}.json";
 
   //создание json и сериализатора

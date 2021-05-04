@@ -11,25 +11,19 @@
         @answer
     </div>
 }
-<button class="button is-success" @onclick="@Continue">Продолжить</button>
 
 @code {
-    
 
-    [Parameter] 
-    public SelectRight Data
+    private SelectRight Data
     {
         get => (SelectRight)Model;
         set => Model = value;
     }
 
-    private List<bool> ActiveIndexes { get; set; } = new List<bool>();
-
-    private void Continue()
+    private List<bool> ActiveIndexes
     {
-        //TODO: подсчет вопросов
-        ActiveIndexes.Clear();
-        OnContinue.InvokeAsync(true);
+        get => (List<bool>) AnswersModel;
+        set => AnswersModel = value;
     }
 
     protected override void OnParametersSet()

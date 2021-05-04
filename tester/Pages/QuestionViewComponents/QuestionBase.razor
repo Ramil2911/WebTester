@@ -1,7 +1,14 @@
 ﻿@code {
+    
+    //Вызывается для проверки правильности
     [Parameter]
     public EventCallback<bool> OnContinue { get; set; }
     
+    //Объект, хранящий данные вопроса
     [Parameter]
     public object Model { get; set; }
+    
+    //Объект, хранящий ответы пользователя на вопрос
+    [Parameter]
+    public object AnswersModel { get; set; }
 }

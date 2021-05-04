@@ -1,9 +1,9 @@
 ﻿@page "/User"
 @using tester.Data
 @using tester.Data.Services
-@inject SessionDataService Session
-@inject TestsDbService TestsDbService;
-@inject NavigationManager NavManager
+@inject SessionDataService _session
+@inject TestsDbService _testsDbService;
+@inject NavigationManager _navManager
 <h3 class="title">*потом придумаю, что тут написать*</h3>
 <h3 class="subtitle">Для запуска теста нажмите кнопку "Начать"</h3>
 <div  class="box is-light mt-2 mb-2 is-primary">
@@ -54,6 +54,12 @@
     public void CloseEntrance() => EntranceOpened = false;
     //Modal
 
+    protected override Task OnParametersSetAsync()
+    {
+        if(_session.IsTestActive) _navManager.NavigateTo("/Test");
+        return base.OnParametersSetAsync();
+    }
+
     public string Name
     {
         get => _name;
@@ -64,10 +70,10 @@
     {
         if (Name == "") return;
 
-        Session.NameSurname = Name;
-        Session.IsTestActive = true; //It is the only place where IsTestActive can be made true
-        NavManager.NavigateTo("/Test");
-        Session.UserTest = TestsDbService.ActiveTest;
+        _session.NameSurname = Name;
+        _session.IsTestActive = true; //It is the only place where IsTestActive can be made true
+        _navManager.NavigateTo("/Test");
+        _session.UserTest = _testsDbService.ActiveTest;
     }
 
 }
