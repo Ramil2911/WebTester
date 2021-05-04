@@ -1,0 +1,2 @@
+* linguist-vendored
+*.razor linguist-vendored=false
