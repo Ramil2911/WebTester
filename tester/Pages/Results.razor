@@ -1,9 +1,10 @@
 ﻿@page "/Results"
 @using tester.Data.Services
+@using tester.Data.Testing.QuizQuestions
 @inject SessionDataService _session
 @inject NavigationManager _navManager
+@inject UsersHistoryService _history;
 <h3>Результаты</h3>
-<p>Правильных ответов @_session.CorrectAnswersMap.Count(x=> x) из @_session.Answers</p>
 <table class="table column is-light">
     <thead>
     <tr>
@@ -12,31 +13,53 @@
     </tr>
     </thead>
     <tbody>
-    @for (var index = 0; index < _session.CorrectAnswersMap.Count; index++)
+    @for (var index = 0; index < Questions.Count; index++)
     {
         var i = index;
-        var item = _session.CorrectAnswersMap[index];
         <tr>
             <td>@i</td>
-            <td>@(_session.CorrectAnswersMap[i] ? "+" : "-")</td>
+            <td>@(Questions[i].Check(AnswersData[i]) ? "+" : "-")</td>
         </tr>
     }
     </tbody>
-    <p>Всего баллов: @_mark</p>
+    <p>Всего баллов @_mark из @_maxMark</p>
 </table>
 
 @code {
     private uint _mark = 0;
+    private uint _maxMark = 0;
+    private List<object> AnswersData { get; set; }
+    private List<IBuildable> Questions { get; set; }
     
     protected override void OnParametersSet()
     {
         if(_session.UserTest is null) _navManager.NavigateTo("/404");
-        _session.Answers = ushort.Parse(_session.UserTest.Questions.Count.ToString());
-        
-        foreach (var t in _session.ChosenQuestions)
+
+        for (var index = 0; index < _session.ChosenQuestions.Count; index++)
         {
-            _mark += t.Price;
+            var t = _session.ChosenQuestions[index];
+            if (t.Check(_session.AnswersData[index]))
+            {
+                _mark += t.Price;
+            }
+            _maxMark += t.Price;
         }
+
+        AnswersData = _session.AnswersData;
+        Questions = _session.ChosenQuestions;
+
+        var historyRecord = new UsersHistoryRecord
+        {
+            Questions = _session.ChosenQuestions,
+            Testname = _session.UserTest.Name,
+            Username = _session.NameSurname,
+            AnswersData = _session.AnswersData,
+            Score = _mark,
+            MaxScore = _maxMark,
+            StartTime = new DateTime(),
+            EndTime = DateTime.Now
+        };
+        _history.AddRecord(historyRecord);
         
         _session.FinishTest();
         base.OnParametersSet();

@@ -46,7 +46,6 @@ else
         _session.NameSurname = _sessionData.NameSurname;
         _session.QuestionIndex = 0;
         _session.TestName = _sessionData.UserTest.Name;
-    //TODO: Scoped-сервисы пересоздаются при обновлении окна, из-за этого тут выпадает NullReferenceException
 
         foreach (var questions in _sessionData.UserTest.Questions)
         {
@@ -60,7 +59,6 @@ else
             _sessionData.AnswersData.Add(Activator.CreateInstance(question.GetAnswersDataType()));
         }
         
-        _sessionData.CorrectAnswersMap = new List<bool>();
         QuestionFragment = ShowDynamicComponent();
 
         _testSessionsService.Sessions.Add(_session);
@@ -76,12 +74,7 @@ else
 
     private void Finish()
     {
-        for (var i = 0; i < _sessionData.UserTest.Questions.Count; i++)
-        {
-            _sessionData.CorrectAnswersMap.Add(_sessionData.ChosenQuestions[i].Check(_sessionData.AnswersData[i]));
-        }
         _navManager.NavigateTo("/Results");
-        return;
     }
 
     private void NextQuestion(bool success)

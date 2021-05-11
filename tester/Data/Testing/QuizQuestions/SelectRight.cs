@@ -17,11 +17,11 @@ namespace tester.Data.Testing.QuizQuestions
         //ReSharper говорит, кто поля ниже можно оставить неинициализированными, но если используется пустой конструктор
         //то это приводит к ошибке
         public string Description { get; set; } = "";
-        public List<string> Answers { get; set; } = new List<string>();
+        public List<string> Answers { get; set; } = new();
         /// <summary>
         /// Хранит не индексы, а bool по индексам значений
         /// </summary>
-        public List<bool> RightAnswersIndices { get; set; } = new List<bool>();
+        public List<bool> RightAnswersIndices { get; set; } = new();
         
         /// <summary>
         /// Показывает, можно ли выбрать несколько правильных ответов
@@ -55,51 +55,37 @@ namespace tester.Data.Testing.QuizQuestions
             Price = price;
         }
         
-        [Obsolete("Больше не используется, но на всякий случай оставлю")] //TODO Удалить
-        public QuestionBase BuildView()
-        {
-            return new SelectRightComponent();
-        }
-        
-        [Obsolete("Больше не используется, но на всякий случай оставлю")] //TODO Удалить
-        public QuestionRedactorViewBase BuildRedactor()
-        {
-            return new SelectRightQuestionRedactorView();
-        }
+        [Obsolete("Больше не используется, но на всякий случай оставлю")]
+        public QuestionBase BuildView() => new SelectRightComponent();
+
+        [Obsolete("Больше не используется, но на всякий случай оставлю")]
+        public QuestionRedactorViewBase BuildRedactor() => new SelectRightQuestionRedactorView();
+
         /// <inheritdoc cref="IBuildable"/>
-        public Type GetViewType()
-        {
-            return typeof(SelectRightComponent);
-        }
+        public Type GetViewType() => typeof(SelectRightComponent);
+
         /// <inheritdoc cref="IBuildable"/>
-        public Type GetRedactorType()
-        {
-            return typeof(SelectRightQuestionRedactorView);
-        }
+        public Type GetRedactorType() => typeof(SelectRightQuestionRedactorView);
+
         /// <inheritdoc cref="IBuildable"/>
-        public Type GetAnswersDataType()
-        {
-            return typeof(List<bool>);
-        }
+        public Type GetAnswersDataType() => typeof(List<bool>);
+
         /// <summary>
         /// <inheritdoc cref="IBuildable"/>
         /// </summary>
         /// <param name="answer">Ответ</param>
         /// <returns>Правильность ответа</returns>
-        public bool Check(object answer)
-        {
-            var list1 = RightAnswersIndices.Except((List<bool>)answer);
+        public bool Check(object answer) =>
+            /*var list1 = RightAnswersIndices.Except((List<bool>)answer);
             var list2 = ((List<bool>)answer).Except(RightAnswersIndices);
-            return list1.Count() + list2.Count() == 0;
-        }
+            return list1.Count() + list2.Count() == 0;*/
+            RightAnswersIndices.SequenceEqual((List<bool>)answer);
 
         /// <inheritdoc cref="IBuildable"/>
-        public IBuildable Copy()
-        {
+        public IBuildable Copy() =>
             //так как этот тип состоит из примитивных типов и списков примитивных типов, можно просто передать
             //примитивные типы и создать новые списки с ними, получится несвязанная с оригиналом копия
             //примечание: string - reference type, который ведет себя как value type
-            return new SelectRight(Description, Answers.ToList(), RightAnswersIndices.ToList(), IsMultipleAnswersAllowed, Price);
-        }
+            new SelectRight(Description, Answers.ToList(), RightAnswersIndices.ToList(), IsMultipleAnswersAllowed, Price);
     }
 }

@@ -6,15 +6,13 @@ namespace tester.Data.Services
 {
     public class SessionDataService
     {
-        public bool IsTestActive { get; set; } = false;
+        public bool IsTestActive { get; set; }
         public string NameSurname { get; set; } = "";
-        public ushort QuestionIndex { get; set; } = 0;
+        public ushort QuestionIndex { get; set; }
         public Test UserTest { get; set; }
-        public List<object> AnswersData { get; set; } = new List<object>();
-        public List<bool> CorrectAnswersMap { get; set; } = new List<bool>();
-        public readonly List<uint> ChosenQuestionIndices = new();
-        public readonly List<IBuildable> ChosenQuestions = new();
-        public ushort Answers { get; set; } = 0;
+        public List<object> AnswersData { get; set; } = new();
+        public List<uint> ChosenQuestionIndices = new();
+        public List<IBuildable> ChosenQuestions = new();
 
         public void FinishTest()
         {
@@ -22,6 +20,9 @@ namespace tester.Data.Services
             NameSurname = "";
             QuestionIndex = 0;
             UserTest = null;
+            ChosenQuestions = new List<IBuildable>();
+            ChosenQuestionIndices = new List<uint>();
+            AnswersData = new List<object>();
         }
         
     }

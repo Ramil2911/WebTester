@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Net;
 
 namespace tester.Data.Services
 {
     public class TestSessionsService
     { 
-        public List<Session> Sessions { get; set; } = new();
+        public ObservableCollection<Session> Sessions { get; set; } = new();
     }
 
     public record Session

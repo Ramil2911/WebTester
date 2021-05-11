@@ -30,6 +30,7 @@ namespace tester
             services.AddSingleton<TestsDbService>();
             services.AddScoped<HttpClient>();
             services.AddSingleton<CodePadService>();
+            services.AddSingleton<UsersHistoryService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

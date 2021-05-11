@@ -6,8 +6,12 @@
 @inject NavigationManager _navManager
 <h3 class="title">*потом придумаю, что тут написать*</h3>
 <h3 class="subtitle">Для запуска теста нажмите кнопку "Начать"</h3>
-<div  class="box is-light mt-2 mb-2 is-primary">
-   Закрытие окна приведет к сбросу сессии, к ней нельзя будет вернуться.</div>
+<article class="message">
+  <div class="message-body">
+    Закрытие окна или его обновление приведет к сбросу сессии, к ней нельзя будет вернуться.
+  </div>
+</article>
+
 <button @onclick="OpenEntrance" class="button is-success is-center is-large mt-6">Начать</button>
 
 @{
